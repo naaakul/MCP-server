@@ -1,0 +1,17 @@
+{
+  "servers": {
+    "mcp-test": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["dist/server.js"],
+	  "cwd" : "${workspaceFolder}",
+	  "dev" : {
+		"watch": "dist/**/*.js",
+		"debug": {
+			"type": "node"
+		}
+	  }
+    }
+  },
+  "inputs": []
+}

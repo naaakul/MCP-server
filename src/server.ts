@@ -16,11 +16,9 @@ const server = new McpServer({
   },
 });
 
-// server.tool(...):
 server.tool(
   "create-user",
   "create a new user in data base",
-  // <-- raw shape (ZodRawShape)
   {
     name: z.string(),
     email: z.string(),
@@ -36,7 +34,6 @@ server.tool(
   },
   async (params) => {
     try {
-      // validate & coerce properly using z.object
       const parsed = z
         .object({
           name: z.string(),
@@ -53,11 +50,36 @@ server.tool(
     } catch (err) {
       console.error("create-user failed:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      return { content: [{ type: "text", text: `Failed to save user: ${msg}` }] };
+      return {
+        content: [{ type: "text", text: `Failed to save user: ${msg}` }],
+      };
     }
   }
 );
 
+server.resource(
+  "users",
+  "users://all",
+  {
+    description: "Get all users data form the database",
+    title: "Users",
+    mineType: "application/json",
+  },
+  async (uri) => {
+    const users = await import("./data/users.json", {
+      with: { type: "json" },
+    }).then((m) => m.default);
+    return {
+      contents: [
+        {
+          uri: uri.href,
+          text: JSON.stringify(users),
+          mimeType: "application/json",
+        },
+      ],
+    };
+  }
+);
 
 const createUser = async (user: {
   name: string;
@@ -71,7 +93,6 @@ const createUser = async (user: {
     users = JSON.parse(raw);
     if (!Array.isArray(users)) users = [];
   } catch (err: any) {
-    // If file doesn't exist, start with empty array. Any other error -> rethrow.
     if (err.code === "ENOENT") {
       users = [];
     } else {
@@ -82,7 +103,6 @@ const createUser = async (user: {
   const id = users.length + 1;
   users.push({ id, ...user });
 
-  // Ensure directory exists before writing
   await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
 
   await fs.writeFile(DATA_FILE, JSON.stringify(users, null, 2), "utf8");
